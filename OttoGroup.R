@@ -28,18 +28,18 @@ baked <- bake(prep, new_data = train)
 #####
 ## random forest
 #####
-forest_mod <- rand_forest(mtry = tune(),
-                          min_n = tune(),
-                          trees = tune()) %>%
-  set_engine("ranger") %>%
-  set_mode("classification")
+# forest_mod <- rand_forest(mtry = tune(),
+#                           min_n = tune(),
+#                           trees = tune()) %>%
+#   set_engine("ranger") %>%
+#   set_mode("classification")
 
 #####
 ## knn model
 #####
-# knn_model <- nearest_neighbor(neighbors = tune()) %>%
-#   set_mode("classification") %>%
-#   set_engine("kknn")
+knn_model <- nearest_neighbor(neighbors = tune()) %>%
+  set_mode("classification") %>%
+  set_engine("kknn") 
 
 ##########
 ## Put into a workflow here
@@ -48,17 +48,16 @@ forest_mod <- rand_forest(mtry = tune(),
 #####
 ## random forest
 #####
-forest_workflow <- workflow() %>%
-  add_recipe(otto_recipe) %>%
-  add_model(forest_mod) 
+# forest_workflow <- workflow() %>%
+#   add_recipe(otto_recipe) %>%
+#   add_model(forest_mod) 
 
 #####
 ## knn 
 #####
-# knn_wf <- workflow() %>%
-#   add_recipe(otto_recipe) %>%
-#   add_model(knn_model)
-
+knn_wf <- workflow() %>%
+  add_recipe(otto_recipe) %>%
+  add_model(knn_model) 
 
 ##########
 ## CV
@@ -67,16 +66,16 @@ forest_workflow <- workflow() %>%
 #####
 ## Grid for forest
 #####
-tuning_grid <- grid_regular(mtry(range = c(1, 9)),
-                            min_n(),
-                            trees(range(100,1000)),
-                            levels = 5)
+# tuning_grid <- grid_regular(mtry(range = c(1, 9)),
+#                             min_n(),
+#                             trees(range(100,1000)),
+#                             levels = 5)
 
 #####
 ## Grid for knn
 #####
-# tuning_grid <- grid_regular(neighbors(),
-#                             levels = 5)
+tuning_grid <- grid_regular(neighbors(),
+                            levels = 5)
 
 #####
 ## Datarobot or boosting
@@ -117,7 +116,7 @@ final_wf <-forest_workflow %>%
 #####
 ## Make predictions
 #####
-otto_predictions <- predict(final_wf,
+otto_predictions <- predict(knn_wf,
                               new_data=test,
                               type="prob")
 
@@ -126,16 +125,16 @@ otto_predictions <- predict(final_wf,
 #####
 kaggle_predictions <- otto_predictions %>% 
   bind_cols(., test) %>% 
-  rename(Class_1 = `.pred_1`,
-         Class_2 = `.pred_2`,
-         Class_3 = `.pred_3`,
-         Class_4 = `.pred_4`,
-         Class_5 = `.pred_5`,
-         Class_6 = `.pred_6`,
-         Class_7 = `.pred_7`,
-         Class_8 = `.pred_8`,
-         Class_9 = `.pred_9`) %>% 
+  rename(Class_1 = `.pred_Class_1`,
+         Class_2 = `.pred_Class_2`,
+         Class_3 = `.pred_Class_3`,
+         Class_4 = `.pred_Class_4`,
+         Class_5 = `.pred_Class_5`,
+         Class_6 = `.pred_Class_6`,
+         Class_7 = `.pred_Class_7`,
+         Class_8 = `.pred_Class_8`,
+         Class_9 = `.pred_Class_9`) %>% 
   select(id, Class_1:Class_9)
   
 
-write_csv(kaggle_predictions, file = "ottoForest.csv")
+write_csv(kaggle_predictions, file = "ottoKnn.csv")
